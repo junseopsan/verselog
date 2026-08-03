@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 96" role="img" aria-label="verselog 로고">
+  <!-- 라이트 배경용 가로형 락업 -->
+  <g>
+    <rect x="14" y="27" width="50" height="9" rx="4.5" fill="#1b2430"/>
+    <rect x="14" y="43" width="37" height="9" rx="4.5" fill="#6a7180"/>
+    <rect x="14" y="59" width="27" height="9" rx="4.5" fill="#5c85c4"/>
+    <circle cx="50" cy="63.5" r="4.5" fill="#3d5a85"/>
+  </g>
+  <text x="86" y="61" font-family="Georgia, 'Noto Serif KR', 'Times New Roman', serif" font-size="40" font-weight="600" letter-spacing="-0.5" fill="#1b2430">verselog<tspan fill="#5c85c4">.</tspan></text>
+</svg>

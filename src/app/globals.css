@@ -1,26 +1,130 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0c0e13;
+  --surface: #161a22;
+  --border: #252b36;
+  --foreground: #e8eaf0;
+  --muted: #8b8f99;
+  --accent: #7da2d9;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-edge: var(--border);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-sans-kr), ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-serif: var(--font-serif-kr), ui-serif, Georgia, serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 상단 금빛 앰비언트 — 스크롤과 무관하게 고정 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 45% at 50% -8%, rgb(125 162 217 / 0.13), transparent 70%),
+    radial-gradient(45% 30% at 88% 108%, rgb(125 162 217 / 0.05), transparent 70%);
+}
+
+/* 필름 그레인 — 디지털 평면감 제거 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+h1,
+h2 {
+  text-wrap: balance;
+}
+
+::selection {
+  background: rgb(125 162 217 / 0.3);
+}
+
+:where(a, button, input, textarea, select, [role="button"]):focus-visible {
+  outline: 2px solid rgb(125 162 217 / 0.7);
+  outline-offset: 2px;
+}
+
+textarea,
+input,
+select {
+  font-family: inherit;
+}
+
+/* 페이지 진입 — 콘텐츠 블록이 순서대로 떠오른다 */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+main > div > * {
+  animation: rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+main > div > *:nth-child(2) {
+  animation-delay: 0.07s;
+}
+main > div > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+main > div > *:nth-child(4) {
+  animation-delay: 0.21s;
+}
+main > div > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+main > div > *:nth-child(n + 6) {
+  animation-delay: 0.35s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main > div > * {
+    animation: none;
+  }
+}
+
+/* 누르는 감각 — 모든 주요 버튼/카드 공용 */
+.press {
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press,
+  .press:active {
+    transition: none;
+    transform: none;
+  }
 }

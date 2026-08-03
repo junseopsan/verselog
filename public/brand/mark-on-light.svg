@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="verselog 심볼">
+  <!-- 라이트 배경용 -->
+  <rect x="18" y="27" width="60" height="10" rx="5" fill="#1b2430"/>
+  <rect x="18" y="44" width="44" height="10" rx="5" fill="#6a7180"/>
+  <rect x="18" y="61" width="32" height="10" rx="5" fill="#5c85c4"/>
+  <circle cx="61" cy="66" r="5" fill="#3d5a85"/>
+</svg>
