@@ -114,18 +114,19 @@ export default function EntryForm({
           />
         </Field>
         <Field label="좋았던 표현">
-          <input
+          <textarea
             value={draft.favoriteExpression}
             onChange={(e) => set("favoriteExpression", e.target.value)}
+            rows={4}
             placeholder="반복되는 짧은 문장"
-            className={inputCls}
+            className={`${inputCls} resize-y font-serif leading-relaxed`}
           />
         </Field>
         <Field label="왜 좋았는지">
           <textarea
             value={draft.reason}
             onChange={(e) => set("reason", e.target.value)}
-            rows={2}
+            rows={4}
             placeholder="감정을 직접 말하지 않고 분위기로 전달해서"
             className={`${inputCls} resize-y`}
           />
