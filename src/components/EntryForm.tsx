@@ -71,6 +71,8 @@ export default function EntryForm({
 }) {
   const [draft, setDraft] = useState<Draft>(() => toDraft(initial, prefill));
   const [error, setError] = useState<string | null>(null);
+  // 참고용 가사. 화면에만 존재하고 어디에도 저장·전송되지 않는다.
+  const [refLyrics, setRefLyrics] = useState("");
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -116,6 +118,21 @@ export default function EntryForm({
             &ldquo;{draft.songTitle.trim()}&rdquo; 가사 검색 ↗
           </a>
         )}
+        <details className="group rounded-lg border border-edge bg-surface/60">
+          <summary className="cursor-pointer select-none px-3 py-2.5 text-[13px] text-muted transition-colors group-open:text-foreground">
+            가사 붙여넣고 보면서 쓰기
+            <span className="ml-1.5 text-[11px] text-muted/70">저장되지 않아요</span>
+          </summary>
+          <div className="px-3 pb-3">
+            <textarea
+              value={refLyrics}
+              onChange={(e) => setRefLyrics(e.target.value)}
+              rows={10}
+              placeholder={"가사 검색에서 복사한 전체 가사를 붙여넣어요.\n화면을 오가지 않고 아래에 옮겨 적을 수 있어요."}
+              className="w-full resize-y rounded-lg border border-edge bg-background/60 px-3 py-2.5 font-serif text-[14px] leading-relaxed text-foreground/80 placeholder:text-muted/50 focus:border-accent/50 focus:outline-none"
+            />
+          </div>
+        </details>
         <Field label="필사한 부분" required>
           <textarea
             value={draft.copiedLyrics}
