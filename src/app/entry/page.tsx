@@ -199,13 +199,15 @@ function EntryInner() {
   );
 }
 
-const FEEDBACK_LABELS: { key: keyof AiFeedback; label: string }[] = [
-  { key: "scene", label: "장면성" },
-  { key: "directEmotion", label: "감정의 직접성" },
-  { key: "hookPotential", label: "후렴 가능성" },
-  { key: "wordChoice", label: "단어의 신선함" },
-  { key: "rhythm", label: "리듬감" },
-];
+function feedbackLabels(isBook: boolean): { key: keyof AiFeedback; label: string }[] {
+  return [
+    { key: "scene", label: "장면성" },
+    { key: "directEmotion", label: "감정의 직접성" },
+    { key: "hookPotential", label: isBook ? "곱씹을 문장" : "후렴 가능성" },
+    { key: "wordChoice", label: "단어의 신선함" },
+    { key: "rhythm", label: isBook ? "문장의 호흡" : "리듬감" },
+  ];
+}
 
 type FeedbackResponse =
   | { feedback: AiFeedback; aiFeedbackAt: string }
@@ -220,6 +222,7 @@ function AiFeedbackSection({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isBook = entry.sourceType === "book";
 
   const request = async (force: boolean) => {
     if (loading) return;
@@ -257,7 +260,7 @@ function AiFeedbackSection({
       {entry.aiFeedback ? (
         <div className="space-y-3">
           <p className="text-sm leading-relaxed">{entry.aiFeedback.overall}</p>
-          {FEEDBACK_LABELS.map(({ key, label }) => (
+          {feedbackLabels(isBook).map(({ key, label }) => (
             <div key={key} className="rounded-lg bg-background/50 p-3">
               <p className="mb-1 text-xs font-semibold text-accent">{label}</p>
               <p className="text-sm leading-relaxed text-foreground/90">
@@ -277,7 +280,9 @@ function AiFeedbackSection({
       ) : (
         <div className="space-y-2">
           <p className="text-xs text-muted">
-            내 문장 2줄에 대해 장면성·후렴 가능성·리듬감 피드백을 받아보세요.
+            {isBook
+              ? "내 문장 2줄에 대해 장면성·단어·문장의 호흡 피드백을 받아보세요."
+              : "내 문장 2줄에 대해 장면성·후렴 가능성·리듬감 피드백을 받아보세요."}
           </p>
           <button
             type="button"

@@ -1,6 +1,7 @@
 // AI 피드백 Edge Function
 // 호출자 JWT로 Supabase 클라이언트를 만들어 RLS가 소유권 검증을 담당한다.
 // GPT-5 구조화 출력으로 5개 기준 피드백을 생성하고 entries.ai_feedback에 캐시한다.
+// source_type(song|book)에 따라 평가 관점을 바꾼다.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import OpenAI from "npm:openai";
 
@@ -10,37 +11,46 @@ const CORS_HEADERS = {
     "authorization, content-type, apikey, x-client-info",
 };
 
-const FEEDBACK_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: [
-    "overall",
-    "scene",
-    "directEmotion",
-    "hookPotential",
-    "wordChoice",
-    "rhythm",
-  ],
-  properties: {
-    overall: { type: "string", description: "전체 총평 2~3문장" },
-    scene: { type: "string", description: "장면성: 장면이 그려지는가" },
-    directEmotion: {
-      type: "string",
-      description: "감정의 직접성: 감정을 직접 말하지 않고 보여주는가",
+function feedbackSchema(isBook: boolean) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: [
+      "overall",
+      "scene",
+      "directEmotion",
+      "hookPotential",
+      "wordChoice",
+      "rhythm",
+    ],
+    properties: {
+      overall: { type: "string", description: "전체 총평 2~3문장" },
+      scene: { type: "string", description: "장면성: 장면이 그려지는가" },
+      directEmotion: {
+        type: "string",
+        description: "감정의 직접성: 감정을 직접 말하지 않고 보여주는가",
+      },
+      hookPotential: {
+        type: "string",
+        description: isBook
+          ? "곱씹을 문장: 마음에 남아 반복해 읽고 싶은 문장인가"
+          : "후렴 가능성: 반복하고 싶은 한 줄이 있는가",
+      },
+      wordChoice: {
+        type: "string",
+        description: "단어의 추상성과 신선함",
+      },
+      rhythm: {
+        type: "string",
+        description: isBook
+          ? "문장의 호흡: 소리 내어 읽기 좋은 리듬인가"
+          : "리듬감: 멜로디에 얹기 좋은 호흡인가",
+      },
     },
-    hookPotential: {
-      type: "string",
-      description: "후렴 가능성: 반복하고 싶은 한 줄이 있는가",
-    },
-    wordChoice: {
-      type: "string",
-      description: "단어의 추상성과 신선함",
-    },
-    rhythm: { type: "string", description: "리듬감: 멜로디에 얹기 좋은 호흡인가" },
-  },
-} as const;
+  } as const;
+}
 
-const SYSTEM_PROMPT = `당신은 K-POP 작사를 가르치는 따뜻하고 구체적인 멘토입니다.
+const SONG_SYSTEM_PROMPT = `당신은 K-POP 작사를 가르치는 따뜻하고 구체적인 멘토입니다.
 작사 지망생이 좋아하는 가사를 필사한 뒤 자기 문장으로 변주한 2줄을 평가합니다.
 
 평가 기준:
@@ -53,6 +63,22 @@ const SYSTEM_PROMPT = `당신은 K-POP 작사를 가르치는 따뜻하고 구�
 원칙:
 - 각 항목 2~3문장, 사용자의 실제 문장을 인용하며 구체적으로.
 - 칭찬할 지점을 먼저 찾고, 개선점은 구체적인 다시 쓰기 방향 1가지로 제안.
+- 따뜻하지만 두루뭉술하지 않게. 한국어로.`;
+
+const BOOK_SYSTEM_PROMPT = `당신은 문장 훈련과 작사를 함께 가르치는 따뜻하고 구체적인 멘토입니다.
+글쓰기 지망생이 책에서 좋은 문장을 필사한 뒤 자기 문장으로 변주한 2줄을 평가합니다.
+
+평가 기준:
+1. 장면성 — 장면이 눈에 보이는가
+2. 감정의 직접성 — 감정을 직접 말하지 않고 장면과 사물로 보여주는가
+3. 곱씹을 문장 — 마음에 남아 반복해 읽고 싶은 문장인가
+4. 단어의 추상성과 신선함 — 단어가 과하게 추상적이지 않고 신선한가
+5. 문장의 호흡 — 소리 내어 읽었을 때 리듬이 좋은가
+
+원칙:
+- 각 항목 2~3문장, 사용자의 실제 문장을 인용하며 구체적으로.
+- 칭찬할 지점을 먼저 찾고, 개선점은 구체적인 다시 쓰기 방향 1가지로 제안.
+- 원문(책 문장)과 비교해 변주가 자기 언어가 되었는지도 짚어줄 것.
 - 따뜻하지만 두루뭉술하지 않게. 한국어로.`;
 
 function json(body: unknown, status = 200): Response {
@@ -100,7 +126,7 @@ Deno.serve(async (req) => {
   // RLS 하에서 조회 — 남의 entry는 0 rows
   const { data: entry, error: selectError } = await supabase
     .from("entries")
-    .select("id, song_title, artist, copied_lyrics, favorite_expression, reason, moods, my_lines, ai_feedback, ai_feedback_at")
+    .select("id, source_type, song_title, artist, copied_lyrics, favorite_expression, reason, moods, my_lines, ai_feedback, ai_feedback_at")
     .eq("id", entryId)
     .maybeSingle();
 
@@ -120,11 +146,13 @@ Deno.serve(async (req) => {
     );
   }
 
+  const isBook = entry.source_type === "book";
   const openai = new OpenAI();
 
   const context = [
-    entry.song_title && `필사한 곡: ${entry.song_title}${entry.artist ? ` — ${entry.artist}` : ""}`,
-    `필사한 가사:\n${entry.copied_lyrics}`,
+    entry.song_title &&
+      `필사한 ${isBook ? "책" : "곡"}: ${entry.song_title}${entry.artist ? ` — ${entry.artist}` : ""}`,
+    `필사한 ${isBook ? "문장" : "가사"}:\n${entry.copied_lyrics}`,
     entry.favorite_expression && `사용자가 좋았다고 한 표현: ${entry.favorite_expression}`,
     entry.reason && `좋았던 이유: ${entry.reason}`,
     entry.moods?.length ? `오늘의 분위기: ${entry.moods.join(", ")}` : null,
@@ -143,11 +171,11 @@ Deno.serve(async (req) => {
         json_schema: {
           name: "lyric_feedback",
           strict: true,
-          schema: FEEDBACK_SCHEMA,
+          schema: feedbackSchema(isBook),
         },
       },
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: isBook ? BOOK_SYSTEM_PROMPT : SONG_SYSTEM_PROMPT },
         { role: "user", content: context },
       ],
     });
