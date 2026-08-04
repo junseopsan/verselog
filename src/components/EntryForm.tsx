@@ -94,7 +94,6 @@ export default function EntryForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="space-y-3">
-        <SectionTitle>오늘의 필사</SectionTitle>
         <div
           role="radiogroup"
           aria-label="필사 출처"
