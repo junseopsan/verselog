@@ -45,20 +45,21 @@ function toDraft(entry?: Entry, prefill?: Prefill): Draft {
 
 function toInput(draft: Draft): NewEntryInput {
   const clean = (s: string) => s.trim() || undefined;
+  // 책은 가벼운 수집 모드 — 제목/작가/필사/이유만 남긴다.
+  const isBook = draft.sourceType === "book";
   return {
     sourceType: draft.sourceType,
     songTitle: clean(draft.songTitle),
     artist: clean(draft.artist),
     copiedLyrics: draft.copiedLyrics.trim(),
-    favoriteExpression: clean(draft.favoriteExpression),
+    favoriteExpression: isBook ? undefined : clean(draft.favoriteExpression),
     reason: clean(draft.reason),
-    myLines: clean(draft.myLines),
-    moods: draft.moods,
-    memo: clean(draft.memo),
+    myLines: isBook ? undefined : clean(draft.myLines),
+    moods: isBook ? [] : draft.moods,
+    memo: isBook ? undefined : clean(draft.memo),
     isFavorite: draft.isFavorite,
-    // 후렴 후보는 노래 전용
-    isHookCandidate: draft.sourceType === "book" ? false : draft.isHookCandidate,
-    checklist: draft.checklist,
+    isHookCandidate: isBook ? false : draft.isHookCandidate,
+    checklist: isBook ? CHECKLIST_ITEMS.map(() => false) : draft.checklist,
   };
 }
 
@@ -165,15 +166,17 @@ export default function EntryForm({
             className={`${inputCls} resize-y font-serif leading-relaxed`}
           />
         </Field>
-        <Field label="좋았던 표현">
-          <textarea
-            value={draft.favoriteExpression}
-            onChange={(e) => set("favoriteExpression", e.target.value)}
-            rows={4}
-            placeholder="반복되는 짧은 문장"
-            className={`${inputCls} resize-y font-serif leading-relaxed`}
-          />
-        </Field>
+        {!isBook && (
+          <Field label="좋았던 표현">
+            <textarea
+              value={draft.favoriteExpression}
+              onChange={(e) => set("favoriteExpression", e.target.value)}
+              rows={4}
+              placeholder="반복되는 짧은 문장"
+              className={`${inputCls} resize-y font-serif leading-relaxed`}
+            />
+          </Field>
+        )}
         <Field label="왜 좋았는지">
           <textarea
             value={draft.reason}
@@ -185,6 +188,7 @@ export default function EntryForm({
         </Field>
       </section>
 
+      {!isBook && (
       <section className="space-y-3">
         <SectionTitle>내 문장 2줄 변주</SectionTitle>
         <p className="text-xs text-muted">
@@ -197,16 +201,16 @@ export default function EntryForm({
           placeholder={"가로등이 하나씩 뒤로 넘어가고\n내 숨은 나보다 먼저 언덕을 오른다"}
           className={`${inputCls} resize-y font-serif leading-relaxed`}
         />
-        {!isBook && (
-          <CheckRow
-            checked={draft.isHookCandidate}
-            onChange={(value) => set("isHookCandidate", value)}
-          >
-            후렴 후보로 표시 — 반복하고 싶은 문장이에요
-          </CheckRow>
-        )}
+        <CheckRow
+          checked={draft.isHookCandidate}
+          onChange={(value) => set("isHookCandidate", value)}
+        >
+          후렴 후보로 표시 — 반복하고 싶은 문장이에요
+        </CheckRow>
       </section>
+      )}
 
+      {!isBook && (
       <section className="space-y-3">
         <SectionTitle>분위기</SectionTitle>
         <MoodTagPicker
@@ -214,7 +218,9 @@ export default function EntryForm({
           onChange={(moods) => set("moods", moods)}
         />
       </section>
+      )}
 
+      {!isBook && (
       <section className="space-y-3">
         <SectionTitle>셀프 피드백</SectionTitle>
         <ChecklistSection
@@ -222,7 +228,9 @@ export default function EntryForm({
           onChange={(checklist) => set("checklist", checklist)}
         />
       </section>
+      )}
 
+      {!isBook && (
       <section className="space-y-3">
         <Field label="메모">
           <textarea
@@ -240,6 +248,7 @@ export default function EntryForm({
           마음에 드는 기록으로 표시
         </CheckRow>
       </section>
+      )}
 
       {error && <p className="text-sm text-accent">{error}</p>}
 

@@ -248,6 +248,8 @@ function AiFeedbackSection({
   };
 
   if (!entry.myLines?.trim()) {
+    // 책은 수집 모드 — 변주가 없으니 안내도 띄우지 않는다.
+    if (isBook) return null;
     return (
       <p className="text-center text-xs text-muted">
         변주를 쓰면 AI 피드백을 받을 수 있어요.
