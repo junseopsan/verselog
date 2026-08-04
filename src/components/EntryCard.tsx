@@ -13,7 +13,14 @@ export default function EntryCard({ entry }: { entry: Entry }) {
       className="press block rounded-xl border border-edge bg-surface p-4 hover:border-accent/30 active:border-accent/50"
     >
       <div className="flex items-center justify-between gap-2 text-xs text-muted">
-        <span>{formatKeyForDisplay(entry.date)}</span>
+        <span className="flex items-center gap-1.5">
+          {formatKeyForDisplay(entry.date)}
+          {entry.sourceType === "book" && (
+            <span className="rounded-full border border-edge px-1.5 py-px text-[10px]">
+              책
+            </span>
+          )}
+        </span>
         {entry.isFavorite && <span className="text-accent">★</span>}
       </div>
       {(entry.songTitle || entry.artist) && (

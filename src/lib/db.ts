@@ -5,6 +5,7 @@ import type { AiFeedback, Entry } from "./types";
 export type EntryRow = {
   id: string;
   date: string;
+  source_type?: "song" | "book" | null;
   song_title: string | null;
   artist: string | null;
   copied_lyrics: string;
@@ -26,6 +27,8 @@ export function toRow(entry: Entry): Omit<EntryRow, "ai_feedback" | "ai_feedback
   return {
     id: entry.id,
     date: entry.date,
+    // 'song'은 DB default라 생략 — source_type 컬럼 마이그레이션 전에도 노래 저장이 깨지지 않는다.
+    ...(entry.sourceType === "book" ? { source_type: "book" as const } : {}),
     song_title: entry.songTitle ?? null,
     artist: entry.artist ?? null,
     copied_lyrics: entry.copiedLyrics,
@@ -46,6 +49,7 @@ export function fromRow(row: EntryRow): Entry {
   return {
     id: row.id,
     date: row.date,
+    sourceType: row.source_type === "book" ? "book" : undefined,
     songTitle: row.song_title ?? undefined,
     artist: row.artist ?? undefined,
     copiedLyrics: row.copied_lyrics,

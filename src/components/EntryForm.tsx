@@ -10,6 +10,7 @@ import ChecklistSection from "./ChecklistSection";
 import CheckRow from "./CheckRow";
 
 type Draft = {
+  sourceType: "song" | "book";
   songTitle: string;
   artist: string;
   copiedLyrics: string;
@@ -27,6 +28,7 @@ export type Prefill = { songTitle?: string; artist?: string };
 
 function toDraft(entry?: Entry, prefill?: Prefill): Draft {
   return {
+    sourceType: entry?.sourceType ?? "song",
     songTitle: entry?.songTitle ?? prefill?.songTitle ?? "",
     artist: entry?.artist ?? prefill?.artist ?? "",
     copiedLyrics: entry?.copiedLyrics ?? "",
@@ -44,6 +46,7 @@ function toDraft(entry?: Entry, prefill?: Prefill): Draft {
 function toInput(draft: Draft): NewEntryInput {
   const clean = (s: string) => s.trim() || undefined;
   return {
+    sourceType: draft.sourceType,
     songTitle: clean(draft.songTitle),
     artist: clean(draft.artist),
     copiedLyrics: draft.copiedLyrics.trim(),
@@ -53,7 +56,8 @@ function toInput(draft: Draft): NewEntryInput {
     moods: draft.moods,
     memo: clean(draft.memo),
     isFavorite: draft.isFavorite,
-    isHookCandidate: draft.isHookCandidate,
+    // 후렴 후보는 노래 전용
+    isHookCandidate: draft.sourceType === "book" ? false : draft.isHookCandidate,
     checklist: draft.checklist,
   };
 }
@@ -84,29 +88,58 @@ export default function EntryForm({
     onSubmit(toInput(draft));
   };
 
+  const isBook = draft.sourceType === "book";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="space-y-3">
         <SectionTitle>오늘의 필사</SectionTitle>
+        <div
+          role="radiogroup"
+          aria-label="필사 출처"
+          className="flex rounded-xl border border-edge bg-surface p-1"
+        >
+          {(
+            [
+              ["song", "노래"],
+              ["book", "책"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={draft.sourceType === value}
+              onClick={() => set("sourceType", value)}
+              className={`press flex-1 rounded-lg py-2 text-sm transition-colors duration-200 ${
+                draft.sourceType === value
+                  ? "bg-accent/15 font-semibold text-accent"
+                  : "text-muted active:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="곡명">
+          <Field label={isBook ? "책 제목" : "곡명"}>
             <input
               value={draft.songTitle}
               onChange={(e) => set("songTitle", e.target.value)}
-              placeholder="Ditto"
+              placeholder={isBook ? "어린 왕자" : "Ditto"}
               className={inputCls}
             />
           </Field>
-          <Field label="아티스트">
+          <Field label={isBook ? "작가" : "아티스트"}>
             <input
               value={draft.artist}
               onChange={(e) => set("artist", e.target.value)}
-              placeholder="NewJeans"
+              placeholder={isBook ? "생텍쥐페리" : "NewJeans"}
               className={inputCls}
             />
           </Field>
         </div>
-        {draft.songTitle.trim() && (
+        {!isBook && draft.songTitle.trim() && (
           <a
             href={lyricsSearchUrl(draft.songTitle.trim(), draft.artist.trim() || undefined)}
             target="_blank"
@@ -124,7 +157,11 @@ export default function EntryForm({
               if (error) setError(null);
             }}
             rows={4}
-            placeholder="마음에 남은 가사 일부를 옮겨 적어요"
+            placeholder={
+              isBook
+                ? "마음에 남은 문장을 옮겨 적어요"
+                : "마음에 남은 가사 일부를 옮겨 적어요"
+            }
             className={`${inputCls} resize-y font-serif leading-relaxed`}
           />
         </Field>
@@ -160,12 +197,14 @@ export default function EntryForm({
           placeholder={"가로등이 하나씩 뒤로 넘어가고\n내 숨은 나보다 먼저 언덕을 오른다"}
           className={`${inputCls} resize-y font-serif leading-relaxed`}
         />
-        <CheckRow
-          checked={draft.isHookCandidate}
-          onChange={(value) => set("isHookCandidate", value)}
-        >
-          후렴 후보로 표시 — 반복하고 싶은 문장이에요
-        </CheckRow>
+        {!isBook && (
+          <CheckRow
+            checked={draft.isHookCandidate}
+            onChange={(value) => set("isHookCandidate", value)}
+          >
+            후렴 후보로 표시 — 반복하고 싶은 문장이에요
+          </CheckRow>
+        )}
       </section>
 
       <section className="space-y-3">

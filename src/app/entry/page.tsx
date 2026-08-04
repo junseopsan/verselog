@@ -49,8 +49,13 @@ function EntryInner() {
       )}
 
       <header className="space-y-1 pt-2">
-        <p className="text-xs tracking-[0.14em] text-muted">
+        <p className="flex items-center gap-1.5 text-xs tracking-[0.14em] text-muted">
           {formatKeyForDisplay(entry.date)}
+          {entry.sourceType === "book" && (
+            <span className="rounded-full border border-edge px-1.5 py-px text-[10px] tracking-normal">
+              책
+            </span>
+          )}
         </p>
         <div className="flex items-start justify-between gap-3">
           <h1 className="font-serif text-2xl font-semibold tracking-tight">
@@ -101,6 +106,7 @@ function EntryInner() {
           <p className="whitespace-pre-wrap font-serif text-[15px] leading-loose">
             {entry.myLines}
           </p>
+          {entry.sourceType !== "book" && (
           <button
             type="button"
             onClick={() => toggleHookCandidate(entry.id)}
@@ -112,6 +118,7 @@ function EntryInner() {
           >
             {entry.isHookCandidate ? "♪ 후렴 후보" : "후렴 후보로 표시"}
           </button>
+          )}
         </Section>
       )}
 

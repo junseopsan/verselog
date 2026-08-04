@@ -11,7 +11,11 @@ export type Entry = {
   id: string;
   /** YYYY-MM-DD, 새벽 4시 경계 기준 귀속일 */
   date: string;
+  /** 필사 출처. 없으면 노래(song)로 취급 — 초기 데이터 호환 */
+  sourceType?: "song" | "book";
+  /** 노래면 곡명, 책이면 책 제목 */
   songTitle?: string;
+  /** 노래면 아티스트, 책이면 작가 */
   artist?: string;
   copiedLyrics: string;
   favoriteExpression?: string;
