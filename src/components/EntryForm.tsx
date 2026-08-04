@@ -5,6 +5,7 @@ import type { Entry } from "@/lib/types";
 import type { NewEntryInput } from "@/lib/useEntries";
 import { CHECKLIST_ITEMS } from "@/lib/constants";
 import { lyricsSearchUrl } from "@/lib/songs";
+import { useEntries } from "@/lib/useEntries";
 import MoodTagPicker from "./MoodTagPicker";
 import ChecklistSection from "./ChecklistSection";
 import CheckRow from "./CheckRow";
@@ -91,6 +92,26 @@ export default function EntryForm({
 
   const isBook = draft.sourceType === "book";
 
+  // 이전 기록의 제목/작가를 자동완성 후보로. 최신 기록 순, 현재 모드(노래/책)만.
+  const { entries } = useEntries();
+  const sourceEntries = (entries ?? []).filter(
+    (e) => (e.sourceType === "book") === isBook,
+  );
+  const titleOptions = dedupe(sourceEntries.map((e) => e.songTitle));
+  const artistOptions = dedupe(sourceEntries.map((e) => e.artist));
+
+  const handleTitleChange = (value: string) => {
+    // 기존 제목을 고르면 비어 있는 작가/아티스트를 함께 채운다.
+    const match = sourceEntries.find(
+      (e) => e.songTitle?.trim() === value.trim() && e.artist,
+    );
+    setDraft((d) => ({
+      ...d,
+      songTitle: value,
+      artist: d.artist.trim() ? d.artist : (match?.artist ?? d.artist),
+    }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <section className="space-y-3">
@@ -125,8 +146,9 @@ export default function EntryForm({
           <Field label={isBook ? "책 제목" : "곡명"}>
             <input
               value={draft.songTitle}
-              onChange={(e) => set("songTitle", e.target.value)}
+              onChange={(e) => handleTitleChange(e.target.value)}
               placeholder={isBook ? "어린 왕자" : "Ditto"}
+              list="title-options"
               className={inputCls}
             />
           </Field>
@@ -135,9 +157,20 @@ export default function EntryForm({
               value={draft.artist}
               onChange={(e) => set("artist", e.target.value)}
               placeholder={isBook ? "생텍쥐페리" : "NewJeans"}
+              list="artist-options"
               className={inputCls}
             />
           </Field>
+          <datalist id="title-options">
+            {titleOptions.map((v) => (
+              <option key={v} value={v} />
+            ))}
+          </datalist>
+          <datalist id="artist-options">
+            {artistOptions.map((v) => (
+              <option key={v} value={v} />
+            ))}
+          </datalist>
         </div>
         {!isBook && draft.songTitle.trim() && (
           <a
@@ -259,6 +292,10 @@ export default function EntryForm({
       </button>
     </form>
   );
+}
+
+function dedupe(values: (string | undefined)[]): string[] {
+  return [...new Set(values.map((v) => v?.trim()).filter((v): v is string => !!v))];
 }
 
 const inputCls =
