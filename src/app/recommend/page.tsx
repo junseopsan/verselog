@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MOODS } from "@/lib/constants";
-import { SONG_RECS, hashKey, type SongRec, type Mood } from "@/lib/songs";
+import {
+  SONG_RECS,
+  pickDaily,
+  lyricsSearchUrl,
+  type SongRec,
+  type Mood,
+} from "@/lib/songs";
 import { getEffectiveDateKey } from "@/lib/date";
 import { useEntries } from "@/lib/useEntries";
 
@@ -27,11 +33,10 @@ export default function RecommendPage() {
   );
   const isRecorded = (song: SongRec) => recordedTitles.has(normalize(song.title));
 
-  // 오늘의 추천: 날짜에 고정하되, 이미 기록한 곡은 건너뛴다.
+  // 오늘의 추천: 날짜에 고정하되, 이미 기록한 곡은 건너뛰고 어제와 다른 곡을 보장한다.
   const pool = SONG_RECS.filter((s) => !isRecorded(s));
   const todayPool = pool.length > 0 ? pool : SONG_RECS;
-  const todayPick =
-    todayPool[(hashKey(getEffectiveDateKey()) + skip) % todayPool.length];
+  const todayPick = pickDaily(todayPool, getEffectiveDateKey(), skip);
 
   const filtered = mood
     ? SONG_RECS.filter((s) => s.moods.includes(mood))
@@ -78,6 +83,14 @@ export default function RecommendPage() {
           >
             이 곡으로 기록하기
           </Link>
+          <a
+            href={lyricsSearchUrl(todayPick.title, todayPick.artist)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press rounded-xl border border-edge px-4 py-3 text-sm text-muted active:border-accent/40"
+          >
+            가사 보기 ↗
+          </a>
           <button
             type="button"
             onClick={() => setSkip((n) => n + 1)}
@@ -112,34 +125,48 @@ export default function RecommendPage() {
           {filtered.map((song) => {
             const recorded = isRecorded(song);
             return (
-              <li key={`${song.title}-${song.artist}`}>
-                <Link
-                  href={writeHref(song)}
-                  className="press block rounded-2xl border border-edge bg-surface p-4 transition-colors active:border-accent/40"
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="font-serif text-[17px] leading-snug">
-                      {song.title}
-                    </p>
-                    {recorded && (
-                      <span className="shrink-0 text-[11px] text-accent">
-                        기록함 ✓
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-[13px] text-muted">{song.artist}</p>
-                  <p className="mt-2 text-[13px] leading-relaxed text-foreground/75">
-                    {song.point}
+              <li
+                key={`${song.title}-${song.artist}`}
+                className="rounded-2xl border border-edge bg-surface p-4"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="font-serif text-[17px] leading-snug">
+                    {song.title}
                   </p>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <Badge>{song.focus}</Badge>
-                    {song.moods.map((m) => (
-                      <span key={m} className="text-xs text-muted">
-                        #{m}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
+                  {recorded && (
+                    <span className="shrink-0 text-[11px] text-accent">
+                      기록함 ✓
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-[13px] text-muted">{song.artist}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-foreground/75">
+                  {song.point}
+                </p>
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <Badge>{song.focus}</Badge>
+                  {song.moods.map((m) => (
+                    <span key={m} className="text-xs text-muted">
+                      #{m}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2 border-t border-edge pt-3">
+                  <a
+                    href={lyricsSearchUrl(song.title, song.artist)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="press flex-1 rounded-lg border border-edge py-2 text-center text-[13px] text-muted active:border-accent/40"
+                  >
+                    가사 보기 ↗
+                  </a>
+                  <Link
+                    href={writeHref(song)}
+                    className="press flex-1 rounded-lg bg-accent/15 py-2 text-center text-[13px] font-medium text-accent active:bg-accent/25"
+                  >
+                    이 곡으로 기록
+                  </Link>
+                </div>
               </li>
             );
           })}

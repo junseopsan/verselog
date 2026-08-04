@@ -266,11 +266,24 @@ export const SONG_RECS: SongRec[] = [
   },
 ];
 
-/** 문자열을 안정적인 양의 정수로. 오늘의 추천을 날짜에 고정하는 데 쓴다. */
-export function hashKey(key: string): number {
-  let h = 7;
-  for (let i = 0; i < key.length; i++) {
-    h = (h * 31 + key.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
+/** "YYYY-MM-DD" → 1970-01-01부터의 일수. 타임존 영향 없이 하루에 정확히 1씩 증가한다. */
+function dayNumber(key: string): number {
+  const [y, m, d] = key.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+}
+
+/**
+ * 오늘의 추천 곡. 날짜에 고정되며, 풀이 그대로인 한 어제와 반드시 다른 곡이 나온다.
+ * 일수 × (풀 크기와 서로소인 스텝)으로 전곡을 골고루 순회한다.
+ */
+export function pickDaily(pool: SongRec[], todayKey: string, skip = 0): SongRec {
+  const n = pool.length;
+  const step = [17, 19, 23].find((k) => n % k !== 0) ?? 1;
+  return pool[(((dayNumber(todayKey) * step) % n) + skip) % n];
+}
+
+/** 라이선스 문제로 가사 원문은 싣지 않는다. 네이버 가사 검색을 새 탭으로 연다. */
+export function lyricsSearchUrl(title: string, artist?: string): string {
+  const q = [title, artist, "가사"].filter(Boolean).join(" ");
+  return `https://search.naver.com/search.naver?query=${encodeURIComponent(q)}`;
 }

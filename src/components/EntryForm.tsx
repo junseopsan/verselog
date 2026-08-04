@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Entry } from "@/lib/types";
 import type { NewEntryInput } from "@/lib/useEntries";
 import { CHECKLIST_ITEMS } from "@/lib/constants";
+import { lyricsSearchUrl } from "@/lib/songs";
 import MoodTagPicker from "./MoodTagPicker";
 import ChecklistSection from "./ChecklistSection";
 import CheckRow from "./CheckRow";
@@ -105,6 +106,16 @@ export default function EntryForm({
             />
           </Field>
         </div>
+        {draft.songTitle.trim() && (
+          <a
+            href={lyricsSearchUrl(draft.songTitle.trim(), draft.artist.trim() || undefined)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-[13px] text-accent/90 transition-colors hover:text-accent"
+          >
+            &ldquo;{draft.songTitle.trim()}&rdquo; 가사 검색 ↗
+          </a>
+        )}
         <Field label="필사한 부분" required>
           <textarea
             value={draft.copiedLyrics}
