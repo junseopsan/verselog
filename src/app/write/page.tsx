@@ -17,6 +17,8 @@ function WriteInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
+  const prefillSong = searchParams.get("song") ?? undefined;
+  const prefillArtist = searchParams.get("artist") ?? undefined;
   const { entries, addEntry, updateEntry } = useEntries();
 
   if (entries === null) {
@@ -42,8 +44,9 @@ function WriteInner() {
         <div aria-hidden className="mt-3 h-px w-10 bg-accent/70" />
       </header>
       <EntryForm
-        key={editing?.id ?? "new"}
+        key={editing?.id ?? `new-${prefillSong ?? ""}`}
         initial={editing}
+        prefill={{ songTitle: prefillSong, artist: prefillArtist }}
         submitLabel={editing ? "수정 저장" : "저장하기"}
         onSubmit={(input) => {
           if (editing) {

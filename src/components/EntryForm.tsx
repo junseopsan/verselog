@@ -22,10 +22,12 @@ type Draft = {
   checklist: boolean[];
 };
 
-function toDraft(entry?: Entry): Draft {
+export type Prefill = { songTitle?: string; artist?: string };
+
+function toDraft(entry?: Entry, prefill?: Prefill): Draft {
   return {
-    songTitle: entry?.songTitle ?? "",
-    artist: entry?.artist ?? "",
+    songTitle: entry?.songTitle ?? prefill?.songTitle ?? "",
+    artist: entry?.artist ?? prefill?.artist ?? "",
     copiedLyrics: entry?.copiedLyrics ?? "",
     favoriteExpression: entry?.favoriteExpression ?? "",
     reason: entry?.reason ?? "",
@@ -57,14 +59,16 @@ function toInput(draft: Draft): NewEntryInput {
 
 export default function EntryForm({
   initial,
+  prefill,
   onSubmit,
   submitLabel,
 }: {
   initial?: Entry;
+  prefill?: Prefill;
   onSubmit: (input: NewEntryInput) => void;
   submitLabel: string;
 }) {
-  const [draft, setDraft] = useState<Draft>(() => toDraft(initial));
+  const [draft, setDraft] = useState<Draft>(() => toDraft(initial, prefill));
   const [error, setError] = useState<string | null>(null);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>

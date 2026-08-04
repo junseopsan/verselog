@@ -95,6 +95,12 @@ export default function HomePage() {
         >
           {stats.recordedToday ? "한 편 더 기록하기" : "오늘 기록하기"}
         </Link>
+        <Link
+          href="/recommend"
+          className="mt-3 block text-center text-[13px] text-muted transition-colors hover:text-foreground"
+        >
+          뭘 필사할지 고민된다면 — 오늘의 추천 →
+        </Link>
       </section>
 
       <section className="grid grid-cols-3 gap-3">
