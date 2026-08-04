@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     title: "필사와 변주",
     statusBarStyle: "black-translucent",
   },
+  icons: {
+    apple: "/apple-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
